@@ -10,11 +10,16 @@ if (process.env.AWS_PROFILE_NAME) {
 	AWS.config.credentials = credentials;
 }
 
-debugLog(`Using AWS Access Key: ${AWS.config.credentials.accessKeyId}`);
-const s3Client = new AWS.S3({apiVersion: '2006-03-01'});
+let s3Client = null;
 
 
 const createBucket = (bucket, pathPrefix) => {
+	if (s3Client == null) {
+		debugLog(`Creating S3 Client with AWS Access Key: ${AWS.config.credentials.accessKeyId}`);
+		
+		s3Client = new AWS.S3({apiVersion: '2006-03-01'});
+	}
+
 	let prefix = (pathPrefix || "").trim();
 	if (prefix.length > 0 && !prefix.endsWith("/")) {
 		prefix = (prefix + "/");
