@@ -74,6 +74,49 @@ function ellipsizeFront(str, length, start="…") {
 	}
 }
 
+function ellipsizeMiddle(str, length, replacement="…", extraCharAtStart=true) {
+	if (str.length <= length) {
+		return str;
+
+	} else {
+		//"abcde"(3)->"a…e"
+		//"abcdef"(3)->"a…f"
+		//"abcdef"(5)->"ab…ef"
+		//"abcdef"(4)->"ab…f"
+		if ((length - replacement.length) % 2 == 0) {
+			return str.substring(0, (length - replacement.length) / 2) + replacement + str.slice(-(length - replacement.length) / 2);
+
+		} else {
+			if (extraCharAtStart) {
+				return str.substring(0, Math.ceil((length - replacement.length) / 2)) + replacement + str.slice(-Math.floor((length - replacement.length) / 2));
+
+			} else {
+				return str.substring(0, Math.floor((length - replacement.length) / 2)) + replacement + str.slice(-Math.ceil((length - replacement.length) / 2));
+			}
+			
+		}
+	}
+}
+
+
+function seededRandom(seed) {
+	var x = Math.sin(seed++) * 10000;
+	return x - Math.floor(x);
+}
+
+function seededRandomIntBetween(seed, min, max) {
+	var rand = seededRandom(seed);
+	return (min + (max - min) * rand);
+}
+
+function randomInt(min, max) {
+	return min + Math.floor(Math.random() * max);
+}
+
+
+
+
+
 function dayMillis() {
 	return 1000 * 60 * 60 * 24;
 }
@@ -192,7 +235,15 @@ function logError(errorId, err, optionalUserData = {}, logStacktrace=true) {
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-const pluralize = (str, num) => { return (str + (num == 1 ? "" : "s")); }
+const pluralize = (str, num) => { return (str + (num == 1 ? "" : "s")); };
+
+const roundToNearest15 = (date = new Date()) => {
+	const minutes = 15;
+	const ms = 1000 * 60 * minutes;
+
+	// 👇️ replace Math.round with Math.ceil to always round UP
+	return new Date(Math.round(date.getTime() / ms) * ms);
+};
 
 
 module.exports = {
