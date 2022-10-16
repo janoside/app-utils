@@ -249,8 +249,12 @@ const roundToNearest15 = (date = new Date()) => {
 module.exports = {
 	formatDate: formatDate,
 	randomString: randomString,
+	seededRandom: seededRandom,
+	seededRandomIntBetween: seededRandomIntBetween,
+	randomInt: randomInt,
 	ellipsize: ellipsize,
 	ellipsizeFront: ellipsizeFront,
+	ellipsizeMiddle: ellipsizeMiddle,
 	dayMillis: dayMillis,
 	weekMillis: weekMillis,
 	monthMillis: monthMillis,
