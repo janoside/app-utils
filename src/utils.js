@@ -170,6 +170,15 @@ const descBuffer = (buffer, format="base64", fullDetail=false) => {
 	}
 };
 
+const intArray = (min, max) => {
+	let array = [];
+	for (let i = min; i <= max; i++) {
+		array.push(i);
+	}
+
+	return array;
+};
+
 
 global.errorStats = {};
 function logError(errorId, err, optionalUserData = {}, logStacktrace=true) {
@@ -266,5 +275,6 @@ module.exports = {
 	logError: logError,
 	descBuffer: descBuffer,
 	sleep: sleep,
-	pluralize: pluralize
+	pluralize: pluralize,
+	intArray: intArray
 };
