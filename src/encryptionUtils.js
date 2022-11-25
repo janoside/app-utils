@@ -2,6 +2,7 @@
 
 const crypto = require("crypto");
 const utils = require("./utils.js");
+const errorLog = debug("utils:encryption");
 
 
 const ivByteCount = 16;
@@ -10,6 +11,10 @@ const algorithm = 'aes-256-ctr';
 const keyCache = {};
 
 const keyFromPasswordAndSalt = (password, pbkdf2SaltString) => {
+	if (password == null || pbkdf2SaltString == null) {
+		errorLog("ERROR: Missing password or salt string");
+	}
+
 	let pwdHash = utils.sha256(password);
 
 	if (!keyCache[pwdHash]) {
