@@ -2,6 +2,7 @@
 
 const crypto = require("crypto");
 const utils = require("./utils.js");
+const debug = require("debug");
 const errorLog = debug("utils:encryption");
 
 
