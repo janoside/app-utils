@@ -255,6 +255,15 @@ const roundToNearest15 = (date = new Date()) => {
 };
 
 
+// ref: https://stackoverflow.com/a/53577159/673828
+function stdev(array) {
+	const n = array.length;
+	const mean = array.reduce((a, b) => a + b) / n;
+
+	return Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n);
+}
+
+
 module.exports = {
 	formatDate: formatDate,
 	randomString: randomString,
@@ -276,5 +285,6 @@ module.exports = {
 	descBuffer: descBuffer,
 	sleep: sleep,
 	pluralize: pluralize,
-	intArray: intArray
+	intArray: intArray,
+	stdev: stdev
 };
