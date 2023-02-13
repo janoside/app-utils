@@ -22,8 +22,8 @@ const createClient = async (dbHost, dbPort, dbUsername, dbPassword, dbName, dbSc
 		insertOne: async (collectionName, document) => {
 			return _insertOne(db, collectionName, document);
 		},
-		updateOne: async (collectionName, document) => {
-			return _updateOne(db, collectionName, document);
+		updateOne: async (collectionName, query, changeObj) => {
+			return _updateOne(db, collectionName, query, changeObj);
 		},
 		deleteOne: async (collectionName, query) => {
 			return _deleteOne(db, collectionName, query);
@@ -185,12 +185,10 @@ async function _insertMany(db, collectionName, documents) {
 	return insertedObjectIds;
 }
 
-async function _updateOne(db, collectionName, document) {
+async function _updateOne(db, collectionName, query, changeObj) {
 	let collection = db.collection(collectionName);
 
-	document.updatedAt = new Date();
-
-	const result = await collection.updateOne(query);
+	const result = await collection.updateOne(query, changeObj);
 
 	return result;
 }
