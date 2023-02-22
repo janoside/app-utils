@@ -13,12 +13,14 @@ if (process.env.AWS_PROFILE_NAME) {
 let s3Client = null;
 
 
-const createBucket = (bucket, pathPrefix) => {
+const createBucket = (bucket, pathPrefix, bucketOptions={}) => {
 	if (s3Client == null) {
 		debugLog(`Creating S3 Client with AWS Access Key: ${AWS.config.credentials.accessKeyId}`);
 		
 		s3Client = new AWS.S3({apiVersion: '2006-03-01'});
 	}
+
+	debugLog(`Creating S3 Bucket: bucket=${bucket}, pathPrefix=${pathPrefix}, bucketOptions=${bucketOptions}`);
 
 	let prefix = (pathPrefix || "").trim();
 	if (prefix.length > 0 && !prefix.endsWith("/")) {
@@ -27,6 +29,12 @@ const createBucket = (bucket, pathPrefix) => {
 
 	return {
 		put: async (data, path, options={}) => {
+			if (bucketOptions.readOnly) {
+				debugLog("Bucket is marked read-only: skipping PUT");
+
+				return;
+			}
+
 			let uploadParams = options || {};
 
 			uploadParams.Bucket = bucket;
@@ -58,6 +66,12 @@ const createBucket = (bucket, pathPrefix) => {
 		},
 
 		del: async (path) => {
+			if (bucketOptions.readOnly) {
+				debugLog("Bucket is marked read-only: skipping DEL");
+				
+				return;
+			}
+
 			var deleteParams = {
 				Bucket: bucket,
 				Key: `${prefix}${path}`,
