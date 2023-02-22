@@ -1,4 +1,4 @@
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 const debug = require("debug");
 
 const utils = require("./utils.js");
@@ -74,6 +74,17 @@ const connectToDbAndRefreshSchema = async (dbHost, dbPort, dbUsername, dbPasswor
 	}
 }
 
+function normalizeQuery(query) {
+	// _id: "string" -> "ObjectId"
+	if (query._id) {
+		if (typeof query._id == "string") {
+			query._id = new ObjectId(query._id);
+		}
+	}
+
+	return query;
+}
+
 
 
 async function setupSchema(db, dbSchema) {
@@ -130,7 +141,7 @@ async function getCollectionIndexes(db, collectionName) {
 
 
 async function _findOne(db, collectionName, query, options={}) {
-	let objects = await _findMany(db, collectionName, query, options);
+	let objects = await _findMany(db, collectionName, normalizeQuery(query), options);
 
 	return objects[0];
 }
@@ -138,7 +149,7 @@ async function _findOne(db, collectionName, query, options={}) {
 async function _findMany(db, collectionName, query, options={}, limit=-1, offset=0, returnAsArray=true) {
 	let collection = db.collection(collectionName);
 
-	let cursor = await collection.find(query, options);
+	let cursor = await collection.find(normalizeQuery(query), options);
 
 	if (offset > 0) {
 		cursor.skip(offset);
@@ -188,7 +199,7 @@ async function _insertMany(db, collectionName, documents) {
 async function _updateOne(db, collectionName, query, changeObj) {
 	let collection = db.collection(collectionName);
 
-	const result = await collection.updateOne(query, changeObj);
+	const result = await collection.updateOne(normalizeQuery(query), changeObj);
 
 	return result;
 }
@@ -196,7 +207,7 @@ async function _updateOne(db, collectionName, query, changeObj) {
 async function _deleteOne(db, collectionName, query) {
 	let collection = db.collection(collectionName);
 
-	const result = await collection.deleteOne(query);
+	const result = await collection.deleteOne(normalizeQuery(query));
 
 	return result;
 }
@@ -204,7 +215,7 @@ async function _deleteOne(db, collectionName, query) {
 async function _deleteMany(db, collectionName, query) {
 	let collection = db.collection(collectionName);
 
-	const result = await collection.deleteMany(query);
+	const result = await collection.deleteMany(normalizeQuery(query));
 
 	return result;
 }
