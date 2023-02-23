@@ -348,7 +348,7 @@ const runMigrationsAsNeeded = async (db, migrationsList) => {
 			throw err;
 		}
 	};
-	
+
 
 	for (let i = 0; i < migrationsList.length; i++) {
 		const migration = migrationsList[i];
@@ -392,5 +392,8 @@ const runMigrationsAsNeeded = async (db, migrationsList) => {
 
 
 module.exports = {
-	createClient: createClient
+	createClient: createClient,
+	createObjectByUniquePropertyIfNeeded: createObjectByUniquePropertyIfNeeded,
+	createAdminUserIfNeeded: createAdminUserIfNeeded,
+	runMigrationsAsNeeded: runMigrationsAsNeeded
 }
