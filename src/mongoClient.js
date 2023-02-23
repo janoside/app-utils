@@ -2,6 +2,7 @@ const { MongoClient, ObjectId } = require("mongodb");
 const debug = require("debug");
 
 const utils = require("./utils.js");
+const passwordUtils = require("./passwordUtils.js");
 
 const debugLog = debug("app:db");
 
@@ -225,6 +226,169 @@ async function _getCollection(db, collectionName) {
 		resolve(db.collection(collectionName));
 	});
 }
+
+
+
+const createAdminUserIfNeeded = async (db, username, password) => {
+	// create admin user if needed
+	const adminUser = await db.findOne("users", {username: username});
+	if (!adminUser) {
+		debugLog(`Creating admin user '${username}'...`);
+
+		const passwordHash = await passwordUtils.hash(password);
+
+		const adminUser = {
+			username: username,
+			passwordHash: passwordHash,
+			roles: ["admin"]
+		};
+
+		await db.insertOne("users", adminUser);
+
+		debugLog(`Admin user '${username}' created.`);
+
+	} else {
+		debugLog(`Admin user '${username}' already exists`);
+	}
+};
+
+const createObjectByUniquePropertyIfNeeded = async (db, objectType, propertyName, propertyValue, obj) => {
+	let filter = {};
+	filter[propertyName] = propertyValue;
+
+	const existingObject = await db.findOne(objectType, filter);
+
+	if (!existingObject) {
+		await db.insertOne(objectType, obj);
+
+		debugLog(`${objectType}(${propertyName}=${propertyValue}) created.`);
+	}
+};
+
+
+
+const runMigrationsAsNeeded = async (db, migrationsList) => {
+	const migrateCollection = async (migrationName, collectionName, filter, updateFunc) => {
+		const collection = await db.getCollection(collectionName);
+
+		const objs = await db.findMany(collectionName, filter);
+		
+		debugLog(`Preparing migration '${migrationName}': filter=${JSON.stringify(filter)}, updateFunc=${JSON.stringify(updateFunc)}`);
+		debugLog(`Running migration '${migrationName}' on ${objs.length} object(s)...`);
+
+		const updateResult = await collection.updateMany(filter, updateFunc);
+
+		debugLog(`Migration '${migrationName}' done: ${JSON.stringify(updateResult)}`)
+		
+		/*for (let i = 0; i < objs.length; i++) {
+			if (i % 1 == 0) {
+				debugLog(`Migration '${migrationName}' update: done with ${i + 1} objects...`);
+			}
+
+			
+		}*/
+	};
+
+	// this migrates each doc in a collection individually with an app function
+	const migrateCollectionViaApplicationFunction = async (db, migrationName, collectionName, filter, appFunc) => {
+		const collection = await db.getCollection(collectionName);
+
+		const objs = await db.findMany(collectionName, filter);
+		
+		debugLog(`Preparing migration '${migrationName}': filter=${JSON.stringify(filter)}, func=${JSON.stringify(appFunc)}`);
+		debugLog(`Running migration '${migrationName}' on ${objs.length} object(s)...`);
+
+		let failureIds = [];
+		for (let i = 0; i < objs.length; i++) {
+			let doc = objs[i];
+			
+			try {
+				await appFunc(doc);
+				
+				const updateResult = await collection.updateOne({_id:doc._id}, {$set: doc});
+
+				debugLog(`Migration result[${i}]: ${JSON.stringify(updateResult)}`);
+
+			} catch (err) {
+				appUtils.utils.logError(`migration-${migrationName}-doc-${doc._id}`, err, {doc: doc});
+
+				failureIds.push(doc._id);
+			}
+		}
+
+		debugLog(`Migration '${migrationName}' done, failures: ${failureIds.length}`);
+
+		if (failureIds.length > 0) {
+			debugLog(`Failure IDs (${failureIds.length.toLocaleString()}): ${failureIds}`);
+		}
+
+		/*for (let i = 0; i < objs.length; i++) {
+			if (i % 1 == 0) {
+				debugLog(`Migration '${migrationName}' update: done with ${i + 1} objects...`);
+			}
+
+			
+		}*/
+	};
+
+	// this allows running arbitrary DB operations with an app function
+	const migrateDbViaApplicationFunction = async (migrationName, appFunc) => {
+		debugLog(`Running migration '${migrationName}': func=${JSON.stringify(appFunc)}`);
+		
+		try {
+			await appFunc();
+
+			debugLog(`Migration done, without error.`);
+
+		} catch (err) {
+			appUtils.utils.logError(`migration-${migrationName}`, err);
+
+			debugLog(`Migration done, with ERROR!`);
+
+			throw err;
+		}
+	};
+	
+
+	for (let i = 0; i < migrationsList.length; i++) {
+		const migration = migrationsList[i];
+
+		const dataMigrationsCollection = await db.getCollection("dataMigrations");
+		
+		let dataMigration = await db.findOne("dataMigrations", {name:migration.name});
+		if (!dataMigration) {
+			try {
+				if (migration.appFunction) {
+					if (migration.collection) {
+						await migrateCollectionViaApplicationFunction(migration.name, migration.collection, migration.filter, migration.appFunction);
+
+					} else {
+						await migrateDbViaApplicationFunction(migration.name, migration.appFunction);
+					}
+
+				} else if (migration.updateFunc) {
+					await migrateCollection(migration.name, migration.collection, migration.filter, migration.updateFunc);
+
+				} else {
+					throw new Error(`Unknown migration type: ${migration.name}`);
+				}
+
+
+				dataMigration = {
+					name: migration.name
+				};
+
+				await db.insertOne("dataMigrations", dataMigration);
+
+
+			} catch (err) {
+				appUtils.utils.logError(`migration-failure-${migration.name}`, err);
+			}
+		} else {
+			debugLog(`Migration '${migration.name}' already done.`);
+		}
+	}
+};
 
 
 module.exports = {
