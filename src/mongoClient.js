@@ -11,6 +11,12 @@ const createClient = async (dbHost, dbPort, dbUsername, dbPassword, dbName, dbSc
 	const db = await connectToDbAndRefreshSchema(dbHost, dbPort, dbUsername, dbPassword, dbName, dbSchema);
 
 	return {
+		countDocuments: async (collectionName, query={}) => {
+			return _countDocuments(db, collectionName, query);
+		},
+		aggregate: async (collectionName, aggregateProperties=[]) => {
+			return _aggregate(db, collectionName, aggregateProperties)
+		},
 		findMany: async (collectionName, query, options={}, limit=-1, offset=0, returnAsArray=true) => {
 			return _findMany(db, collectionName, query, options, limit, offset, returnAsArray);
 		},
@@ -166,6 +172,20 @@ async function _findMany(db, collectionName, query, options={}, limit=-1, offset
 	} else {
 		return cursor;
 	}
+}
+
+async function _countDocuments(db, collectionName, query={}) {
+	let collection = db.collection(collectionName);
+
+	const count = await collection.countDocuments(normalizeQuery(query));
+
+	return count;
+}
+
+async function _aggregate(db, collectionName, aggregateProperties=[]) {
+	let collection = db.collection(collectionName);
+
+	return await collection.aggregate(aggregateProperties);
 }
 
 async function _insertOne(db, collectionName, document) {
