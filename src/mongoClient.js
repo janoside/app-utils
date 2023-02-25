@@ -14,7 +14,7 @@ const createClient = async (dbHost, dbPort, dbUsername, dbPassword, dbName, dbSc
 		countDocuments: async (collectionName, query={}) => {
 			return _countDocuments(db, collectionName, query);
 		},
-		aggregate: async (collectionName, aggregateProperties=[]) => {
+		aggregate: (collectionName, aggregateProperties=[]) => {
 			return _aggregate(db, collectionName, aggregateProperties)
 		},
 		findMany: async (collectionName, query, options={}, limit=-1, offset=0, returnAsArray=true) => {
@@ -182,10 +182,10 @@ async function _countDocuments(db, collectionName, query={}) {
 	return count;
 }
 
-async function _aggregate(db, collectionName, aggregateProperties=[]) {
+function _aggregate(db, collectionName, aggregateProperties=[]) {
 	let collection = db.collection(collectionName);
 
-	return await collection.aggregate(aggregateProperties);
+	return collection.aggregate(aggregateProperties);
 }
 
 async function _insertOne(db, collectionName, document) {
