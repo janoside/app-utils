@@ -1,21 +1,21 @@
 const fs = require("fs");
 
 process.env.DEBUG="*";
-process.env.AWS_PROFILE_NAME = "links-app";
+process.env.AWS_PROFILE = "links-app";
 
 const appUtils = require("../index.js");
 
 const s3Utils = appUtils.s3Utils;
 const utils = appUtils.utils;
 
-const s3Bucket = s3Utils.createBucket("links.rest", "testing/app-utils");
+const s3Bucket = s3Utils.createBucket("links.rest", "us-east-2", "testing/app-utils");
 
 
 let testKey = 'test-data/test2.txt';
 
 
-const buffer = fs.readFileSync("./index.js");
-console.log("buffer.length: " + buffer.length);
+const buffer = Buffer.from("abc");
+console.log("Data: " + buffer);
 
 (async () => {
 	try {
@@ -23,11 +23,15 @@ console.log("buffer.length: " + buffer.length);
 
 		const getData = await s3Bucket.get(testKey);
 
-		console.log("buffer.length(after): " + getData.length);
+		console.log("Data (retrieved): " + getData);
 
-		const deleteResult = s3Bucket.del(testKey);
+		const deleteResult = await s3Bucket.del(testKey);
 
 		console.log("deleteResult: " + JSON.stringify(deleteResult));
+
+		const getDataNonExistent = await s3Bucket.get("nonexistent-key");
+
+		console.log("NonExistent: " + getDataNonExistent);
 
 	} catch (err) {
 		utils.logError("asdfuashdfe3", err);
