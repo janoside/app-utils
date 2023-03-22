@@ -52,7 +52,7 @@ const createBucket = (bucket, bucketRegion, pathPrefix, bucketOptions={}) => {
 		//s3Client = new AWS.S3({apiVersion: '2006-03-01'});
 	}
 
-	debugLog(`Creating S3 Bucket: bucket=${bucket}, pathPrefix=${pathPrefix}, bucketOptions=${JSON.stringify(bucketOptions)}`);
+	debugLog(`Creating S3 Bucket: name=${bucket}, region=${bucketRegion}, pathPrefix=${pathPrefix}, bucketOptions=${JSON.stringify(bucketOptions)}`);
 
 	let prefix = (pathPrefix || "").trim();
 	if (prefix.length > 0 && !prefix.endsWith("/")) {
